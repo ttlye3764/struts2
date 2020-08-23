@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="qna">
+	<typeAlias alias = "qnaVO" type = "kr.or.ddit.vo.QnaBoardVO"/>
+	
+	<sql id="selectALL">
+		SELECT *
+		FROM QNABOARD
+		WHERE QA_STATUS = 'n'
+	</sql>
+	
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="TOTAL">
+					QA_TITLE LIKE '%'||#search_keyword#||'%'
+					OR QA_CONTENT LIKE '%'||#search_keyword#||'%'
+					OR QA_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="TITLE">
+					QA_TITLE LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="CONTENT">
+					QA_CONTENT LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="NICKNAME">
+					QA_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<resultMap id="qnaBoardResultMap" class="qnaVO">
+		<result property="qa_no" 		column="qa_no" />
+		<result property="qa_title" 	column="qa_title" />
+		<result property="qa_writer" 	column="qa_writer" />
+		<result property="qa_nickname" 	column="qa_nickname" />
+		<result property="qa_pwd" 		column="qa_pwd" />
+		<result property="qa_mail" 		column="qa_mail" />
+		<result property="qa_ip" 		column="qa_ip" />
+		<result property="qa_content" 	column="qa_content" />
+		<result property="qa_hit" 		column="qa_hit" />
+		<result property="qa_reg_date"	column="qa_reg_date" />
+		<result property="qa_status" 	column="qa_status" />
+		<result property="qa_group" 	column="qa_group" />
+		<result property="qa_seq" 		column="qa_seq" />
+		<result property="qa_depth" 	column="qa_depth" />
+		<result property="items" column="qa_no" select="qnaFileItem.qnaFileItemList"/>
+	</resultMap>
+	
+	<select id="qnaList" parameterClass="Map" resultClass="qnaVO">
+	 SELECT B.*
+		FROM (SELECT ROWNUM RNUM, A.*
+				FROM (
+					<include refid="selectALL" />
+					<include refid="searchCondition" />
+					ORDER BY QA_GROUP, QA_SEQ DESC) A) B
+		<![CDATA[
+		WHERE B.RNUM <= #startCount#
+		AND B.RNUM >= #endCount#
+		]]>
+		ORDER BY B.RNUM DESC
+	</select>
+	
+	
+	<select id="qnaBoardInfo" parameterClass="Map" resultMap="qnaBoardResultMap">
+		<include refid="selectALL" />
+		AND QA_NO = #qa_no#
+	</select>
+	
+	<insert id="insertQnaBoardInfo" parameterClass="qnaVO">
+		<selectKey keyProperty="qa_no" resultClass="string">
+			SELECT
+			QNABOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO QNABOARD(QA_NO,QA_TITLE,QA_WRITER, QA_NICKNAME, QA_PWD,
+		QA_MAIL, QA_IP, QA_CONTENT, QA_GROUP)
+		VALUES(#qa_no#, #qa_title#, #qa_writer#, #qa_nickname#, #qa_pwd#, #qa_mail#, #qa_ip#,
+		#qa_content#, #qa_no#)
+	</insert>
+	
+	<update id="deleteQnaBoard" parameterClass="Map">
+		UPDATE QNABOARD
+		SET
+		QA_STATUS = 'y'
+		WHERE QA_NO = #qa_no#
+	</update>
+	
+	<update id="updateQnaBoard" parameterClass="qnaVO">
+		UPDATE QNABOARD
+		SET
+		QA_TITLE = #qa_title#
+		,QA_PWD = #qa_pwd#
+		,QA_NICKNAME = #qa_nickname#
+		,QA_MAIL = #qa_mail#
+		,QA_IP=#qa_ip#
+		,QA_CONTENT = #qa_content#
+		WHERE QA_NO = #qa_no#
+	</update>
+	
+	<update id="updateQnaReply" parameterClass="qnaVO">
+		UPDATE QNABOARD
+		SET QA_TITLE = #qa_title# ,QA_PWD = #qa_pwd#
+		,QA_NICKNAME = #qa_nickname#
+		,QA_MAIL = #qa_mail#
+		,QA_IP=#qa_ip#
+		,QA_CONTENT = #qa_content#
+		WHERE QA_NO = #qa_no#
+	</update>
+	
+	<select id="incrementSeq" parameterClass="qnaVO" resultClass="String">
+		SELECT MAX(QA_SEQ)+1
+		FROM QNABOARD
+		WHERE QA_GROUP = #qa_group#
+	</select>
+	
+	<update id="updateSeq" parameterClass="qnaVO">
+		UPDATE QNABOARD
+			SET QA_SEQ = QA_SEQ +1 
+		WHERE QA_GROUP = #qa_group#
+		AND QA_SEQ > #qa_seq#
+	</update>
+	
+	<insert id="insertQnaBoardReply" parameterClass="qnaVO">
+		<selectKey keyProperty="qa_no" resultClass="string">
+			SELECT
+			QNABOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO QNABOARD(
+							QA_NO
+							,QA_TITLE
+							,QA_WRITER
+							,QA_NICKNAME
+							,QA_PWD
+							,QA_MAIL
+							,QA_IP
+							,QA_CONTENT
+							,QA_GROUP
+							,QA_SEQ
+							,QA_DEPTH
+							)
+					VALUES(#qa_no#
+							,#qa_title#
+							,#qa_writer#
+							,#qa_nickname#
+							,#qa_pwd#
+							,#qa_mail#
+							,#qa_ip#
+							,#qa_content#
+							,#qa_group#
+							,#qa_seq#
+							,#qa_depth#)
+	</insert>
+	
+	<select id ="totalCount" parameterClass="Map" resultClass="String">
+		SELECT COUNT(QA_NO)
+		FROM QNABOARD
+		WHERE QA_STATUS = 'n'
+		<include refid="searchCondition"/> 
+	</select>
+
+</sqlMap>

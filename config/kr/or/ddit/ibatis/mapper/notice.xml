@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="notice">
+	<typeAlias alias="NoticeBoardVO" type="kr.or.ddit.vo.NoticeBoardVO" />
+
+	<resultMap id="NoticeBoardResultMap" class="NoticeBoardVO">
+		<result property="nt_no" 		column="nt_no" />
+		<result property="nt_title" 	column="nt_title" />
+		<result property="nt_writer" 	column="nt_writer" />
+		<result property="nt_nickname" 	column="nt_nickname" />
+		<result property="nt_pwd" 		column="nt_pwd" />
+		<result property="nt_mail" 		column="nt_mail" />
+		<result property="nt_ip" 		column="nt_ip" />
+		<result property="nt_content" 	column="nt_content" />
+		<result property="nt_hit" 		column="nt_hit" />
+		<result property="nt_reg_date"	column="nt_reg_date" />
+		<result property="nt_status" 	column="nt_status" />
+		<result property="nt_seq" 		column="nt_seq" />
+		<result property="nt_group" 	column="nt_group" />
+		<result property="items" column="nt_no" select="noticeFileItem.NoticeFileItemList"/>
+	</resultMap>
+
+	<sql id="selectAll">
+		SELECT *
+		FROM NOTICEBOARD
+		WHERE NT_STATUS = 'n'
+	</sql>
+
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="TOTAL">
+					NT_TITLE
+					LIKE '%'||#search_keyword#||'%'
+					OR NT_CONTENT LIKE
+					'%'||#search_keyword#||'%'
+					OR NT_WRITER LIKE
+					'%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="TITLE">
+					NT_TITLE
+					LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="CONTENT">
+					NT_CONTENT
+					LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="WRITER">
+					NT_WRITER
+					LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+	<select id="NoticeBoardList" parameterClass="Map" resultClass="NoticeBoardVO">
+		SELECT B.*
+		FROM (SELECT ROWNUM RNUM, A.*
+				FROM (
+					<include refid="selectAll" />
+					<include refid="searchCondition" />
+					ORDER BY NT_GROUP, NT_SEQ DESC) A) B
+		<![CDATA[WHERE B.RNUM <= #startCount#
+		  AND B.RNUM >= #endCount#
+		]]>
+		ORDER BY B.RNUM DESC
+	</select>
+
+	
+	<select id="NoticeBoardInfo" parameterClass="Map" resultMap="NoticeBoardResultMap">
+		<include refid="selectAll" />
+		AND NT_NO = #nt_no#
+	</select>
+
+	<!-- insert 전과 후에 어디든지 삽입할 수 있지만 중복해서는 사용 불가 -->
+	<insert id="insertNoticeBoardInfo" parameterClass="NoticeBoardVO">
+		<selectKey keyProperty="nt_no" resultClass="string">
+			SELECT
+			NOTICEBOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO NOTICEBOARD(NT_NO,
+								NT_TITLE,
+								NT_WRITER,
+								NT_NICKNAME, 
+								NT_PWD,
+								NT_MAIL, 
+								NT_IP, 
+								NT_CONTENT,
+								NT_GROUP
+								)
+								VALUES(#nt_no#, 
+									   #nt_title#, 
+									   #nt_writer#, 
+									   #nt_nickname#, 
+									   #nt_pwd#, 
+									   #nt_mail#, 
+									   #nt_ip#,
+									   #nt_content#,
+									   #nt_no# 
+									   )
+	</insert>
+
+	  <update id="deleteNoticeBoard" parameterClass="Map">
+		UPDATE NOTICEBOARD
+		SET
+		NT_STATUS = 'y'
+		WHERE NT_NO = #nt_no#
+	</update>
+
+	<update id="updateNoticeBoard" parameterClass="NoticeBoardVO">
+		UPDATE NOTICEBOARD
+		SET
+		NT_TITLE = #nt_title#
+		,NT_PWD = #nt_pwd#
+		<!-- ,NT_NICKNAME = #nt_nickname# -->
+		,NT_MAIL = #nt_mail#
+		,NT_IP=#nt_ip#
+		,NT_CONTENT = #nt_content#
+		,NT_GROUP
+		= #nt_no#
+		WHERE NT_NO = #nt_no#
+	</update>
+	
+	
+	
+	<select id="incrementSeq" parameterClass="NoticeBoardVO" resultClass="String">
+		SELECT MAX(NT_SEQ)+1
+		FROM NOTICEBOARD
+		WHERE NT_GROUP = #nt_group#
+	</select>
+	
+	<update id="updateSeq" parameterClass="NoticeBoardVO">
+		UPDATE NOTICEBOARD
+			SET NT_SEQ = NT_SEQ +1 
+		WHERE NT_GROUP = #nt_group#
+		AND NT_SEQ > #nt_seq#
+	</update>
+	
+	<insert id="insertNoticeboardReply" parameterClass="NoticeBoardVO">
+		<selectKey keyProperty="nt_no" resultClass="string">
+			SELECT
+			FREEBOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO NOTICE(
+							 NT_NO
+							,NT_TITLE
+							,NT_WRITER
+							,NT_NICKNAME
+							,NT_PWD
+							,NT_MAIL
+							,NT_IP
+							,NT_CONTENT
+							,NT_GROUP
+							,NT_SEQ
+							,NT_DEPTH
+							)
+					VALUES(#nt_no#
+							,#nt_title#
+							,#nt_writer#
+							,#nt_nickname#
+							,#nt_pwd#
+							,#nt_mail#
+							,#nt_ip#
+							,#nt_content#
+							,#nt_group#
+							,#nt_seq#
+							,#nt_depth#)
+	</insert>
+	
+	<select id="totalCount" parameterClass="map" resultClass="string">
+		SELECT COUNT(NT_NO)
+			FROM NOTICEBOARD
+		WHERE NT_STATUS = 'n'
+		<include refid="searchCondition"></include>
+	</select> 
+</sqlMap> 

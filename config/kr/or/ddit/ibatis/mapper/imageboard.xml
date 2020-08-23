@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="imageBoard">
+	<typeAlias alias = "imageBoardVO" type = "kr.or.ddit.vo.ImageBoardVO"/>
+	
+	<sql id="selectALL">
+		SELECT *
+		FROM IMAGEBOARD
+		WHERE IMG_STATUS = 'n'
+	</sql>
+	
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="TOTAL">
+					IMG_TITLE LIKE '%'||#search_keyword#||'%'
+					OR IMG_CONTENT LIKE '%'||#search_keyword#||'%'
+					OR IMG_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="TITLE">
+					IMG_TITLE LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="CONTENT">
+					IMG_CONTENT LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="NICKNAME">
+					IMG_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<resultMap id="imageBoardResultMap" class="imageBoardVO">
+		<result property="img_no" 		column="img_no" />
+		<result property="img_title" 	column="img_title" />
+		<result property="img_writer" 	column="img_writer" />
+		<result property="img_nickname" column="img_nickname" />
+		<result property="img_pwd" 		column="img_pwd" />
+		<result property="img_mail" 	column="img_mail" />
+		<result property="img_ip" 		column="img_ip" />
+		<result property="img_content" 	column="img_content" />
+		<result property="img_hit" 		column="img_hit" />
+		<result property="img_reg_date"	column="img_reg_date" />
+		<result property="img_status" 	column="img_status" />
+		<result property="img_group" 	column="img_group" />
+		<result property="img_seq" 		column="img_seq" />
+		<result property="img_depth" 	column="img_depth" />
+		<result property="items" column="img_no" select="imageFileItem.imageFileItemList"/>
+	</resultMap>
+	
+	<select id="imageBoardList" parameterClass="Map" resultMap="imageBoardResultMap">
+	 SELECT B.*
+		FROM (SELECT ROWNUM RNUM, A.*
+				FROM (
+					<include refid="selectALL" />
+					<include refid="searchCondition" />
+					ORDER BY IMG_GROUP, IMG_SEQ DESC) A) B
+		<![CDATA[
+		WHERE B.RNUM <= #startCount#
+		AND B.RNUM >= #endCount#
+		]]>
+		ORDER BY B.RNUM DESC
+	</select>
+	
+	<select id="imageBoardInfo" parameterClass="Map" resultMap="imageBoardResultMap">
+		<include refid="selectALL" />
+		AND IMG_NO = #img_no#
+	</select>
+	
+	<insert id="insertImageBoardInfo" parameterClass="imageBoardVO">
+		<selectKey keyProperty="img_no" resultClass="string">
+			SELECT
+			IMAGEBOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMAGEBOARD(IMG_NO,IMG_TITLE,IMG_WRITER, IMG_NICKNAME, IMG_PWD,
+		IMG_MAIL, IMG_IP, IMG_CONTENT, IMG_GROUP)
+		VALUES(#img_no#, #img_title#, #img_writer#, #img_nickname#, #img_pwd#, #img_mail#, #img_ip#,
+		#img_content#, #img_no#)
+	</insert>
+	
+	<update id="deleteImageBoard" parameterClass="Map">
+		UPDATE IMAGEBOARD
+		SET
+		IMG_STATUS = 'y'
+		WHERE IMG_NO = #img_no#
+	</update>
+	
+	<update id="updateImageBoard" parameterClass="imageBoardVO">
+		UPDATE IMAGEBOARD
+		SET
+		IMG_TITLE = #img_title#
+		,IMG_PWD = #img_pwd#
+		,IMG_NICKNAME = #img_nickname#
+		,IMG_MAIL = #img_mail#
+		,IMG_IP=#img_ip#
+		,IMG_CONTENT = #img_content#
+		WHERE IMG_NO = #img_no#
+	</update>
+	
+	<select id="incrementSeq" parameterClass="imageBoardVO" resultClass="String">
+		SELECT MAX(IMG_SEQ)+1
+		FROM IMAGEBOARD
+		WHERE IMG_GROUP = #img_group#
+	</select>
+	
+	<update id="updateSeq" parameterClass="imageBoardVO">
+		UPDATE IMAGEBOARD
+			SET IMG_SEQ = IMG_SEQ +1 
+		WHERE IMG_GROUP = #img_group#
+		AND IMG_SEQ > #img_seq#
+	</update>
+	
+	<insert id="insertImageBoardReply" parameterClass="imageBoardVO">
+		<selectKey keyProperty="img_no" resultClass="string">
+			SELECT
+			IMAGEBOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMAGEBOARD(
+							IMG_NO
+							,IMG_TITLE
+							,IMG_WRITER
+							,IMG_NICKNAME
+							,IMG_PWD
+							,IMG_MAIL
+							,IMG_IP
+							,IMG_CONTENT
+							,IMG_GROUP
+							,IMG_SEQ
+							,IMG_DEPTH
+							)
+					VALUES(#img_no#
+							,#img_title#
+							,#img_writer#
+							,#img_nickname#
+							,#img_pwd#
+							,#img_mail#
+							,#img_ip#
+							,#img_content#
+							,#img_group#
+							,#img_seq#
+							,#img_depth#)
+	</insert>
+	
+	<select id ="totalCount" parameterClass="Map" resultClass="String">
+		SELECT COUNT(IMG_NO)
+		FROM IMAGEBOARD
+		WHERE IMG_STATUS = 'n'
+		<include refid="searchCondition"/> 
+	</select>
+
+</sqlMap>

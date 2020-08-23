@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="imageFileItem">
+	<typeAlias alias="imageFileItemVO" type="kr.or.ddit.vo.ImageFileItemVO" />
+
+	<statement id ="imageFileItemList" resultClass="imageFileItemVO">
+		SELECT *
+		FROM IMAGEFILEITEM
+		WHERE IMG_BO_NO = #img_no#
+	</statement>	
+	
+	<insert id="insertImageFileItem" parameterClass="imageFileItemVO">
+		<selectKey keyProperty="img_seq">
+			SELECT IMAGEFILEITEM_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMAGEFILEITEM(IMG_SEQ
+							 ,IMG_BO_NO
+							 ,IMG_NAME
+							 ,IMG_SAVE_NAME
+							 ,IMG_CONTENT_TYPE
+							 ,IMG_SIZE)
+					VALUES(#img_seq#
+						  ,#img_bo_no#
+						  ,#img_name#
+						  ,#img_save_name#
+						  ,#img_content_type#
+						  ,#img_size#)
+	</insert>
+	
+	<select id="imageFileItemInfo" parameterClass="Map" resultClass="imageFileItemVO">
+		SELECT *
+		FROM IMAGEFILEITEM
+		WHERE IMG_SEQ = #img_seq#
+	</select>
+</sqlMap>

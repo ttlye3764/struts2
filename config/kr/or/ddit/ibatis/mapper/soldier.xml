@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="soldier">
+	<typeAlias alias = "soldierVO" type = "kr.or.ddit.vo.SoldierVO"/>
+	
+	<sql id="selectALL">
+		SELECT *
+		FROM SOLDIER
+	</sql>
+	
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="All">
+					SOL_NUM LIKE '%'||#search_keyword#||'%'
+					OR SOL_NUM LIKE '%'||#search_keyword#||'%'					
+ 				</isEqual>
+				<isEqual property="search_keycode" compareValue="ID">
+					SOL_NUM LIKE '%'||#search_keyword#||'%'
+ 				</isEqual>
+				<isEqual property="search_keycode" compareValue="NAME">
+					SOL_NAME LIKE '%'||#search_keyword#||'%'
+ 				</isEqual>
+				<isEqual property="search_keycode" compareValue="MEMADDR">
+					MEM_ADDR LIKE '%'||#search_keyword#||'%'
+ 				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<select id ="soldierList" resultClass="soldierVO" parameterClass="Map">
+		SELECT B.*
+		FROM(
+			SELECT ROWNUM RNUM,A.*
+			FROM(
+				<include refid="selectALL"/>
+				<include refid="searchCondition"/>)A)B
+		WHERE SOL_STATUS = '0'
+		<![CDATA[
+		AND RNUM <= #startCount#
+		AND RNUM >= #endCount#
+		]]>
+	</select>
+	
+	
+	
+	<select id = "soldierInfo" parameterClass="Map" resultClass="soldierVO">
+		<include refid="selectALL"/>
+		WHERE SOL_NUM = #sol_num#
+		<dynamic prepend="AND">
+			<isNotEmpty property="sol_pass">
+				SOL_PASS = #sol_pass#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<insert id = "insertSoldier" parameterClass="soldierVO">
+		INSERT INTO SOLDIER (SOL_NUM, SOL_RANK, SOL_NAME, SOL_SKILLNUM, SOL_STARTDAY, SOL_ENDDAY, SOL_GUNNUM, SOL_BIR, SOL_ADD1, SOL_ADD2, SOL_TEL, SOL_HOBBY, SOL_ABILITY, SOL_HEIGHT, SOL_WEIGHT, SOL_PASS, SOL_EMAIL, SOL_CALENDAR, SOL_DISCHARGE)VALUES(#sol_num#,#sol_rank#, #sol_name#,#sol_skillnum#, #sol_startday#,#sol_endday#,#sol_gunnum#,#sol_bir#,#sol_add1#,#sol_add2#,#sol_tel#,#sol_hobby#,#sol_ability#,#sol_height#,#sol_weight#,#sol_pass#,#sol_email#,#sol_calendar#,#sol_discharge#)
+	</insert>
+	
+	<select id="soldierNum" parameterClass="soldierVO" resultClass="String">
+		select max(sol_num)
+		from soldier
+	</select>
+	
+	<update id="updateSoldierInfo" parameterClass="soldierVO">
+		UPDATE SOLDIER
+		SET SOL_PASS = #sol_pass#
+			,SOL_ADD1 = #sol_add1#
+			,SOL_ADD2 = #sol_add2#
+			,SOL_RANK = #sol_rank#
+			,SOL_SKILLNUM = #sol_skillnum#
+			,SOL_STARTDAY = #sol_startday#
+			,SOL_ENDDAY = #sol_endday#
+			,SOL_GUNNUM = #sol_gunnum#
+			,SOL_BIR = #sol_bir#
+			,SOL_TEL = #sol_tel#
+			,SOL_HOBBY = #sol_hobby#
+			,SOL_ABILITY = #sol_ability#
+			,SOL_HEIGHT = #sol_height#
+			,SOL_WEIGHT = #sol_weight#
+			,SOL_EMAIL = #sol_email#
+			,SOL_CALENDAR = #sol_calendar#
+		WHERE SOL_NUM = #sol_num#
+	</update>
+	
+	<select id ="totalCount" parameterClass="Map" resultClass="String">
+			SELECT COUNT(SOL_NUM)
+			FROM SOLDIER
+			WHERE SOL_DELETE = 'n'
+			AND SOL_STATUS = '0'
+			<include refid="searchCondition"/> 
+	</select>
+
+</sqlMap>

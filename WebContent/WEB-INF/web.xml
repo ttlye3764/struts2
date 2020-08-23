@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>Military</display-name>
+  <welcome-file-list>
+  	<welcome-file>main.jsp</welcome-file>
+  </welcome-file-list>
+  
+  
+   
+   
+  <!-- 웹 애플리케이션 내 전역 활용 상수 선언 -->
+   <context-param>
+   		<param-name>oracleDriver</param-name>
+   		<param-value>oracle.jdbc.driver.OracleDriver</param-value>
+   </context-param>
+   
+   <context-param>
+   		<param-name>oracleURL</param-name>
+   		<param-value>jdbc:oracle:thin:@localhost:1521:XE</param-value>
+   </context-param>
+   
+   <context-param>
+   		<param-name>mysqlDriver</param-name>
+   		<param-value>com.mysql.jdbc.Driver</param-value>
+   </context-param>
+   
+   <context-param>
+   		<param-name>mysqlURL</param-name>
+   		<param-value>jdbc:mysql://localhost:3306:DB명</param-value>
+   </context-param>   
+   
+   <!-- tiles -->
+   <servlet>
+   		<servlet-name>webController</servlet-name>
+   		<servlet-class>kr.or.ddit.base.controller.WebController</servlet-class>
+   		<load-on-startup>1</load-on-startup>
+   </servlet>
+   
+   <servlet-mapping>
+   		<servlet-name>webController</servlet-name>
+   		<url-pattern>*.do</url-pattern>
+   </servlet-mapping>
+   
+   <servlet>
+   	<servlet-name>tiles</servlet-name>
+   	<servlet-class>org.apache.tiles.web.startup.TilesServlet</servlet-class>
+   	<init-param>
+   		<param-name>org.apache.tiles.impl.BasicTilesContainer.DEFINITIONS_CONFIG</param-name>
+   		<param-value>/WEB-INF/views/tiles/tiles-def.xml</param-value>
+   	</init-param>
+   	<load-on-startup>2</load-on-startup>
+   </servlet>
+   
+   <servlet>
+   	<servlet-name>tilesDispatch</servlet-name>
+   	<servlet-class>org.apache.tiles.web.util.TilesDispatchServlet</servlet-class>
+   </servlet>
+   
+   <servlet-mapping>
+   	<servlet-name>tilesDispatch</servlet-name>
+   	<url-pattern>*.tiles</url-pattern>
+   </servlet-mapping>
+   
+   
+   
+   <!-- 
+   	해당 웹 애플리케이션 내 전역적인 Exception 처리
+   	
+   	 1. 에러타입으로 처리
+   	 
+   	 2. 에러코드로 처리
+   	 
+   	  * location에는 fowarding처리 (컨텍스트 루트|패스는 생략)
+   	  
+   	  에러 처리의 우선순위
+   	  
+   	  1. jsp내 errorPage 선언과 활용
+   	  
+   	  2.error-page 하위의 excpetion-type 선언과 활용
+   	  
+   	  3. error-page 하위의 error-code 선언과 활용(젤 많이 씀)
+   	  
+   	   * 2,3번은 web.xml에 선언한것 
+    -->
+  <error-page>
+      <exception-type>java.lang.ArithmeticException</exception-type>
+      <location>/error/error500.jsp</location>
+   </error-page>
+   
+   <error-page>
+      <error-code>404</error-code>
+      <location>/error/error404.jsp</location>
+   </error-page>
+   
+   <error-page>
+      <error-code>500</error-code>
+      <location>/error/error500.jsp</location>
+   </error-page>
+
+
+   <!-- 
+   		세션 유효시간(만료 시간) 설정 : 분 단위 설정
+    -->
+   <session-config>
+   		<session-timeout>30</session-timeout>
+   </session-config>
+   
+   
+<!--    <filter> -->
+<!--     <filter-name>filter1</filter-name> -->
+<!--     <filter-class>kr.or.ddit.filter.Filter1</filter-class> -->
+<!--    </filter> -->
+<!--    <filter-mapping> -->
+<!--    	<filter-name>filter1</filter-name> -->
+<!--    	<url-pattern>/*</url-pattern>  /ddit -->
+<!--    </filter-mapping> -->
+   
+<!--    <filter> -->
+<!--     <filter-name>filter2</filter-name> -->
+<!--     <filter-class>kr.or.ddit.filter.Filter2</filter-class> -->
+<!--    </filter> -->
+<!--    <filter-mapping> -->
+<!--    	<filter-name>filter2</filter-name> -->
+<!--    	<url-pattern>*.jsp</url-pattern> 확장자가 jsp인 모든 파일 -->
+<!--    </filter-mapping> -->
+   
+<!--    <filter> -->
+<!--     <filter-name>filter3</filter-name> -->
+<!--     <filter-class>kr.or.ddit.filter.Filter3</filter-class> -->
+<!--    </filter> -->
+<!--    <filter-mapping> -->
+<!--    	<filter-name>filter3</filter-name> -->
+<!--    	<url-pattern>/13/*</url-pattern> /13/에 있는 모든 폴더 -->
+<!--    </filter-mapping> -->
+   
+   
+  <filter>
+  	<filter-name>encodingFilter</filter-name>
+  	<filter-class>kr.or.ddit.filter.EncodingFilter</filter-class>
+  </filter>
+  
+  <filter-mapping>
+  	<filter-name>encodingFilter</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+  <filter>
+  	<filter-name>ipCheckFilter</filter-name>
+  	<filter-class>kr.or.ddit.filter.IPCheckFilter</filter-class>
+  </filter>
+  <filter-mapping>
+  	<filter-name>ipCheckFilter</filter-name>
+  	<url-pattern>/02/*</url-pattern>
+  </filter-mapping> 
+  
+  <filter>
+  	<filter-name>fileUploadFilter</filter-name>
+  	<filter-class>kr.or.ddit.filter.FileUploadFilter</filter-class>
+  </filter>
+  <filter-mapping>
+  	<filter-name>fileUploadFilter</filter-name>
+  	<url-pattern>*.jsp</url-pattern>
+  </filter-mapping> 
+  
+  
+  <!-- 
+  	13 폴더 내 자원 대상 : 로그인을 안해도 접근할 수 있는 요소 
+  					main.jsp
+  					main.jsp?contentPage=/13/freeboard/freeboardList.jsp
+  					loginCheck.jsp
+  					main.jsp?contentPage=/13/freeboard/freeboardView.jsp?
+  					
+  				  로그인 되어야만 접근할 수 있는 요소
+  				  	main.jsp?contentPage=/13/freeboard/freeboardForm.jsp
+  				  	main.jsp?contentPage=/13/freeboard/insertFreeboardInfo.jsp
+  				  	main.jsp?contentPage=/13/freeboard/updateFreeboardInfo.jsp
+  				  	main.jsp?contentPage=/13/freeboard/deleteFreeboardInfo.jsp
+  				  	
+  		필터를 활용한 로그인 검증 체크 처리
+  		filter name : loginCheckFilter
+  		filter class : kr.or.ddit.filter.LoginCheckFilter
+  				클라이언트 요청시 URI 획득(request.getRuqeustURI())
+  				          servletPath (request.getServletPath()) 활용으로 작성
+ 	-->
+ 	  
+  <!--
+	리스너 : 서블릿 2.3 스팩에 최초 포함되어 웹 애플리케이션 서버(WAS, 웹 컨테이너, 서블릿 컨테이너)에서
+			Application(ServletContext), ServletRequest, HttpSession의 인스턴스 /GC, 
+	      	저장영역(Scope) 대상 값의 저장과 삭제, 갱신시 전파되는 이벤트의 청취자를 의미
+   -->
+   <listener>
+   	<listener-class>kr.or.ddit.listener.Log4jInitializeListener</listener-class>
+   </listener>
+   
+   <listener>
+   	<listener-class>kr.or.ddit.listener.CustomServletRequestListener</listener-class>
+   </listener>
+   
+   <listener>
+   	<listener-class>kr.or.ddit.listener.SessionManager</listener-class>
+   </listener>
+   
+  
+  
+  
+  
+</web-app>
+

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="data">
+	<typeAlias alias = "dataVO" type = "kr.or.ddit.vo.DataBoardVO"/>
+	
+	<sql id="selectALL">
+		SELECT *
+		FROM DATABOARD
+		WHERE DB_STATUS = 'n'
+	</sql>
+	
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="TOTAL">
+					DB_TITLE LIKE '%'||#search_keyword#||'%'
+					OR DB_CONTENT LIKE '%'||#search_keyword#||'%'
+					OR DB_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="TITLE">
+					DB_TITLE LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="CONTENT">
+					DB_CONTENT LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="NICKNAME">
+					DB_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<resultMap id="dataBoardResultMap" class="dataVO">
+		<result property="db_no" 		column="db_no" />
+		<result property="db_title" 	column="db_title" />
+		<result property="db_writer" 	column="db_writer" />
+		<result property="db_nickname" 	column="db_nickname" />
+		<result property="db_pwd" 		column="db_pwd" />
+		<result property="db_mail" 		column="db_mail" />
+		<result property="db_ip" 		column="db_ip" />
+		<result property="db_content" 	column="db_content" />
+		<result property="db_hit" 		column="db_hit" />
+		<result property="db_reg_date"	column="db_reg_date" />
+		<result property="db_status" 	column="db_status" />
+		<result property="db_group" 	column="db_group" />
+		<result property="db_seq" 		column="db_seq" />
+		<result property="db_depth" 	column="db_depth" />
+		<result property="items" column="db_no" select="dataFileItem.dataFileItemList"/>
+	</resultMap>
+	
+	<select id="dataList" parameterClass="Map" resultClass="dataVO">
+	 SELECT B.*
+		FROM (SELECT ROWNUM RNUM, A.*
+				FROM (
+					<include refid="selectALL" />
+					<include refid="searchCondition" />
+					ORDER BY DB_GROUP, DB_SEQ DESC) A) B
+		<![CDATA[
+		WHERE B.RNUM <= #startCount#
+		AND B.RNUM >= #endCount#
+		]]>
+		ORDER BY B.RNUM DESC
+	</select>
+	
+	<select id="dataBoardInfo" parameterClass="Map" resultMap="dataBoardResultMap">
+		<include refid="selectALL" />
+		AND DB_NO = #db_no#
+	</select>
+	
+	<insert id="insertDataBoardInfo" parameterClass="dataVO">
+		<selectKey keyProperty="db_no" resultClass="string">
+			SELECT
+			DATABOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO DATABOARD(DB_NO,DB_TITLE,DB_WRITER, DB_NICKNAME, DB_PWD,
+		DB_MAIL, DB_IP, DB_CONTENT, DB_GROUP)
+		VALUES(#db_no#, #db_title#, #db_writer#, #db_nickname#, #db_pwd#, #db_mail#, #db_ip#,
+		#db_content#, #db_no#)
+	</insert>
+	
+	<update id="deleteDataBoard" parameterClass="Map">
+		UPDATE DATABOARD
+		SET
+		DB_STATUS = 'y'
+		WHERE DB_NO = #db_no#
+	</update>
+	
+	<update id="updateDataBoard" parameterClass="dataVO">
+		UPDATE DATABOARD
+		SET
+		DB_TITLE = #db_title#
+		,DB_PWD = #db_pwd#
+		,DB_NICKNAME = #db_nickname#
+		,DB_MAIL = #db_mail#
+		,DB_IP=#db_ip#
+		,DB_CONTENT = #db_content#
+		WHERE DB_NO = #db_no#
+	</update>
+	
+	<update id="adminupdateDataBoard" parameterClass="dataVO">
+		UPDATE DATABOARD
+		SET
+		DB_TITLE = #db_title#
+		,DB_CONTENT = #db_content#
+		WHERE DB_NO = #db_no#
+	</update>
+	
+	<select id="incrementSeq" parameterClass="dataVO" resultClass="String">
+		SELECT MAX(DB_SEQ)+1
+		FROM DATABOARD
+		WHERE DB_GROUP = #db_group#
+	</select>
+	
+	<update id="updateSeq" parameterClass="dataVO">
+		UPDATE DATABOARD
+			SET DB_SEQ = DB_SEQ +1 
+		WHERE DB_GROUP = #db_group#
+		AND DB_SEQ > #db_seq#
+	</update>
+	
+	<insert id="insertDataBoardReply" parameterClass="dataVO">
+		<selectKey keyProperty="db_no" resultClass="string">
+			SELECT
+			DATABOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO DATABOARD(
+							DB_NO
+							,DB_TITLE
+							,DB_WRITER
+							,DB_NICKNAME
+							,DB_PWD
+							,DB_MAIL
+							,DB_IP
+							,DB_CONTENT
+							,DB_GROUP
+							,DB_SEQ
+							,DB_DEPTH
+							)
+					VALUES(#db_no#
+							,#db_title#
+							,#db_writer#
+							,#db_nickname#
+							,#db_pwd#
+							,#db_mail#
+							,#db_ip#
+							,#db_content#
+							,#db_group#
+							,#db_seq#
+							,#db_depth#)
+	</insert>
+	
+	<select id ="totalCount" parameterClass="Map" resultClass="String">
+		SELECT COUNT(DB_NO)
+		FROM DATABOARD
+		WHERE DB_STATUS = 'n'
+		<include refid="searchCondition"/> 
+	</select>
+
+</sqlMap>

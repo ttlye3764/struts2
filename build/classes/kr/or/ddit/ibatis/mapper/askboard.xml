@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="askBoard">
+	<typeAlias alias = "askBoardVO" type = "kr.or.ddit.vo.AskBoardVO"/>
+	
+	<sql id="selectALL">
+		SELECT *
+		FROM ASKBOARD
+		WHERE ASK_STATUS = 'n'
+	</sql>
+	
+	<sql id="searchCondition">
+		<dynamic prepend="AND">
+			<isNotEmpty property="search_keyword" open="(" close=")">
+				<isEqual property="search_keycode" compareValue="TOTAL">
+					ASK_TITLE LIKE '%'||#search_keyword#||'%'
+					OR ASK_CONTENT LIKE '%'||#search_keyword#||'%'
+					OR ASK_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="TITLE">
+					ASK_TITLE LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="CONTENT">
+					ASK_CONTENT LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+				<isEqual property="search_keycode" compareValue="NICKNAME">
+					ASK_NICKNAME LIKE '%'||#search_keyword#||'%'
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<select id="askBoardList" parameterClass="Map" resultClass="askBoardVO">
+	 SELECT B.*
+		FROM (SELECT ROWNUM RNUM, A.*
+				FROM (
+					<include refid="selectALL" />
+					<include refid="searchCondition" />
+					ORDER BY ASK_SEQ DESC) A) B
+		<![CDATA[
+		WHERE B.RNUM <= #startCount#
+		AND B.RNUM >= #endCount#
+		]]>
+		ORDER BY B.RNUM DESC
+	</select>
+	
+	
+	<select id="askBoardInfo" parameterClass="Map" resultClass="askBoardVO">
+		<include refid="selectALL" />
+		AND ASK_NO = #ask_no#
+	</select>
+		
+
+	
+	<select id ="totalCount" parameterClass="Map" resultClass="String">
+		SELECT COUNT(ASK_NO)
+		FROM ASKBOARD
+		WHERE ASK_STATUS = 'n'
+		<include refid="searchCondition"/> 
+	</select>
+	
+	<insert id="insertAskBoardInfo" parameterClass="askBoardVO">
+		INSERT INTO ASKBOARD
+		(ASK_NO,
+		ASK_TITLE,
+		ASK_WRITER,
+		ASK_NICKNAME,
+		ASK_CONTENT,
+		ASK_IP
+		)VALUES(
+		ASKBOARD_SEQ.NEXTVAL,
+		#ask_title#,
+		#ask_writer#,
+		#ask_writer#,
+		#ask_content#,
+		#ask_ip#)
+	</insert>
+	
+	<update id="updateAskBoardInfo" parameterClass="askBoardVO">
+		update ASKBOARD
+		set ASK_TITLE = #ask_title#,
+			ASK_WRITER = #ask_writer#,
+			ASK_CONTENT = #ask_content#,
+			ASK_IP = #ask_ip#
+		WHERE ASK_NO = #ask_no#
+	</update>
+
+</sqlMap>

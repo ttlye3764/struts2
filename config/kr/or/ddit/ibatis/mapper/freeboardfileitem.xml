@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="freeboardfileItem">
+	<typeAlias alias="freeboardfileItemVO" type="kr.or.ddit.vo.FreeBoardFileItemVO" />
+
+	<statement id ="freeboardfileItemList" resultClass="freeboardfileItemVO">
+		SELECT *
+		FROM FREEBOARDFILEITEM
+		WHERE BO_BO_NO = #bo_no#
+	</statement>	
+	
+	<insert id="insertfreeboardFileItem" parameterClass="freeboardfileItemVO">
+		<selectKey keyProperty="bo_seq">
+			SELECT FREEBOARDFILEITEM_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO FREEBOARDFILEITEM(BO_SEQ
+							 ,BO_BO_NO
+							 ,BO_NAME
+							 ,BO_SAVE_NAME
+							 ,BO_CONTENT_TYPE
+							 ,BO_SIZE)
+					VALUES(#bo_seq#
+						  ,#bo_bo_no#
+						  ,#bo_name#
+						  ,#bo_save_name#
+						  ,#bo_content_type#
+						  ,#bo_size#)
+	</insert>
+
+	<select id="freeboardfileItemInfo" parameterClass="Map" resultClass="freeboardfileItemVO">
+		SELECT *
+		FROM FREEBOARDFILEITEM
+		WHERE BO_BO_NO = #bo_no#
+	</select>
+</sqlMap>

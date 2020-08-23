@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="qnaFileItem">
+	<typeAlias alias="qnaFileItemVO" type="kr.or.ddit.vo.QnaFileItemVO" />
+
+	<statement id ="qnaFileItemList" resultClass="qnaFileItemVO">
+		SELECT *
+		FROM QNAFILEITEM
+		WHERE QA_BO_NO = #qa_no#
+	</statement>	
+	
+	<insert id="insertQnaFileItem" parameterClass="qnaFileItemVO">
+		<selectKey keyProperty="qa_seq">
+			SELECT QNAFILEITEM_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO QNAFILEITEM(QA_SEQ
+							 ,QA_BO_NO
+							 ,QA_NAME
+							 ,QA_SAVE_NAME
+							 ,QA_CONTENT_TYPE
+							 ,QA_SIZE)
+					VALUES(#qa_seq#
+						  ,#qa_bo_no#
+						  ,#qa_name#
+						  ,#qa_save_name#
+						  ,#qa_content_type#
+						  ,#qa_size#)
+	</insert>
+	
+	<select id="qnaFileItemInfo" parameterClass="Map" resultClass="qnaFileItemVO">
+		SELECT *
+		FROM QNAFILEITEM
+		WHERE QA_SEQ = #qa_seq#
+	</select>
+</sqlMap>
